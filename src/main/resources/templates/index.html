@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>현경님의 스마트 오운완</title>
+    <style>
+        body { background-color: #f4f7f6; font-family: 'Malgun Gothic', sans-serif; padding: 15px; max-width: 600px; margin: 0 auto; }
+        #lock-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1a1a1a; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; }
+        .input-section { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 25px; }
+        .card { border: none; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; overflow: hidden; }
+        .h-등 { background: #007bff; } .h-하체 { background: #28a745; } 
+        .h-가슴 { background: #dc3545; } .h-어깨 { background: #fd7e14; } .h-삼두 { background: #6f42c1; }
+        .header { color: white; padding: 12px; font-weight: bold; text-align: center; }
+        .date-text { font-size: 0.85rem; font-weight: normal; opacity: 0.9; margin-left: 8px; }
+        .form-select, .form-control { padding: 10px; font-size: 0.95rem; border-radius: 12px; margin-bottom: 8px; border: 1px solid #ddd; }
+        .btn-lg-custom { padding: 15px; font-size: 1.1rem; border-radius: 15px; width: 100%; font-weight: bold; }
+        .pt-badge { background: #ffc107; color: #000; font-size: 0.7rem; padding: 2px 6px; border-radius: 50px; font-weight: bold; }
+        .self-badge { background: #6c757d; color: #fff; font-size: 0.7rem; padding: 2px 6px; border-radius: 50px; font-weight: bold; }
+        .vol-text { color: #0d6efd; font-weight: bold; font-size: 0.9rem; }
+        .del-link { color: #ff4d4d; font-size: 1.2rem; text-decoration: none; font-weight: bold; }
+        .sub-info { font-size: 0.8rem; color: #666; background: #f8f9fa; padding: 8px; border-radius: 8px; margin-top: 5px; border-left: 3px solid #dee2e6; white-space: pre-wrap; }
+        .btn-add-point { border-radius: 12px; height: 45px; background-color: #007bff; border: none; color: white; font-weight: bold; min-width: 60px; }
+        .label-sm { font-size: 0.8rem; font-weight: bold; color: #555; margin-bottom: 4px; display: block; }
+        
+        /* 포인트 리스트 스타일 */
+        .point-list-container { max-height: 150px; overflow-y: auto; background: #fdfdfd; border: 1px solid #eee; border-radius: 12px; padding: 10px; margin-top: 5px; }
+        .point-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem; }
+        .point-item label { flex-grow: 1; margin-left: 8px; cursor: pointer; }
+        .point-del { color: #ccc; font-size: 0.8rem; cursor: pointer; padding: 0 5px; }
+        .point-del:hover { color: #ff4d4d; }
+    </style>
+</head>
+<body>
+
+<div id="lock-screen">
+    <h2 class="mb-4 fw-bold">🔐 HYUN KYUNG ONLY</h2>
+    <div class="px-4 w-100" style="max-width: 400px;">
+        <input type="password" id="pwInput" class="form-control mb-3 text-center" placeholder="비밀번호 입력" onkeydown="if(event.keyCode==13) checkPassword()">
+        <button onclick="checkPassword()" class="btn btn-primary btn-lg-custom">운동 기록 시작</button>
+    </div>
+</div>
+
+<div id="main-content" style="display:none;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold text-primary mb-0">🏋️‍♂️ 현경's 리포트</h5>
+        <button onclick="location.reload()" class="btn btn-sm btn-outline-secondary">잠금</button>
+    </div>
+
+    <div class="input-section">
+        <div class="mb-3">
+            <label class="label-sm">📅 운동 날짜 선택</label>
+            <input type="date" id="workoutDate" class="form-control">
+        </div>
+
+        <div class="btn-group w-100 mb-3">
+            <input type="radio" class="btn-check" name="workoutType" id="typePt" value="PT 레슨" checked onclick="toggleNoteField()">
+            <label class="btn btn-outline-primary fw-bold" for="typePt">📅 PT 수업</label>
+            <input type="radio" class="btn-check" name="workoutType" id="typeSelf" value="개인 운동" onclick="toggleNoteField()">
+            <label class="btn btn-outline-secondary fw-bold" for="typeSelf">🏃 개인</label>
+        </div>
+
+        <div class="row g-2">
+            <div class="col-6"><select id="part" class="form-select" onchange="updateExercises()">
+                <option value="등">등 (BACK)</option><option value="하체">하체 (LEG)</option>
+                <option value="가슴">가슴 (CHEST)</option><option value="어깨">어깨 (SHOULDER)</option>
+                <option value="삼두">삼두 (ARM)</option>
+            </select></div>
+            <div class="col-6"><select id="tool" class="form-select">
+                <option value="머신">머신</option><option value="덤벨">덤벨</option>
+                <option value="바벨">바벨</option><option value="스미스">스미스</option><option value="케이블">케이블</option>
+                <option value="맨몸">맨몸</option>
+            </select></div>
+            <div class="col-12"><select id="exName" class="form-select"></select></div>
+
+            <div class="col-4"><input type="number" id="weight" class="form-control text-center" placeholder="kg"></div>
+            <div class="col-4"><input type="number" id="sets" class="form-control text-center" placeholder="set"></div>
+            <div class="col-4"><input type="number" id="reps" class="form-control text-center" placeholder="회"></div>
+
+            <div id="ptOnlyFields" class="col-12 border-top pt-2 mt-2">
+                <div class="row g-2">
+                    <div class="col-6">
+                        <label class="small fw-bold text-primary">🖐️ 손 모양(그립)</label>
+                        <select id="handGrip" class="form-select">
+                            <option value="기본 랫 바(커브)">기본 랫 바(커브)</option>
+                            <option value="스트레이트 바">스트레이트 바</option>
+                            <option value="패러럴 그립">패러럴 그립</option>
+                            <option value="로프 바">로프 바</option>
+                            <option value="와이드 그립">와이드 그립</option>
+                            <option value="언더 그립">언더 그립</option>
+                            <option value="뉴트럴 그립">뉴트럴 그립</option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="small fw-bold text-primary">⚡ 속도</label>
+                        <select id="speed" class="form-select">
+                            <option value="천천히 (자극)">천천히 (자극)</option>
+                            <option value="빵빵차기 (폭발)">빵빵차기 (폭발)</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="small fw-bold text-primary">🚨 티칭 포인트 (여러 개 선택 가능)</label>
+                        <div class="d-flex gap-2 mb-2">
+                            <input type="text" id="ptDirect" class="form-control mb-0" placeholder="새 포인트 입력" style="height: 45px;">
+                            <button onclick="addTeachingPoint()" class="btn-add-point">추가</button>
+                        </div>
+                        <div id="pointContainer" class="point-list-container">
+                            </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="selfOnlyFields" class="col-12 border-top pt-2 mt-2" style="display:none;">
+                <label class="small fw-bold text-secondary">오늘의 수행도</label>
+                <select id="selfPerf" class="form-select">
+                    <option value="3. 만족">🔥 3. 만족</option>
+                    <option value="2. 약간부족">📐 2. 약간부족</option>
+                    <option value="1. 개판">🌊 1. 개판</option>
+                </select>
+                <textarea id="selfNote" class="form-control" rows="4" placeholder="메모 (1. 자동 번호 생성)"></textarea>
+            </div>
+
+            <button onclick="addWorkout()" class="btn btn-primary btn-lg-custom mt-3">운동 기록하기</button>
+        </div>
+    </div>
+
+    <div id="report-area"></div>
+</div>
+
+<script>
+    const ACCESS_KEY = "pt1234"; 
+    let workouts = JSON.parse(localStorage.getItem('hyunKyungData')) || [];
+    let teachingPoints = JSON.parse(localStorage.getItem('ptPoints')) || ["형님인사 (힌지 유지)", "척추 장신! (키 커지게)", "복압 꽉! 허리 꺾임 주의"];
+
+    document.getElementById('workoutDate').valueAsDate = new Date();
+
+    function updatePointUI() {
+        const container = document.getElementById('pointContainer');
+        container.innerHTML = teachingPoints.map((p, index) => `
+            <div class="point-item">
+                <input type="checkbox" id="pt_${index}" value="${p}" class="pt-check">
+                <label for="pt_${index}">${p}</label>
+                <span class="point-del" onclick="removePoint(${index})">×</span>
+            </div>
+        `).join('');
+        localStorage.setItem('ptPoints', JSON.stringify(teachingPoints));
+    }
+
+    function addTeachingPoint() {
+        const val = document.getElementById('ptDirect').value.trim();
+        if(val && !teachingPoints.includes(val)) {
+            teachingPoints.unshift(val);
+            updatePointUI();
+            document.getElementById('ptDirect').value = "";
+        }
+    }
+
+    function removePoint(index) {
+        if(confirm("이 포인트를 리스트에서 지울까요?")) {
+            teachingPoints.splice(index, 1);
+            updatePointUI();
+        }
+    }
+
+    function checkPassword() {
+        if(document.getElementById('pwInput').value === ACCESS_KEY) {
+            document.getElementById('lock-screen').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
+            renderReport();
+        } else { alert("비밀번호 확인!"); }
+    }
+
+    function toggleNoteField() {
+        const isPt = document.getElementById('typePt').checked;
+        document.getElementById('ptOnlyFields').style.display = isPt ? 'block' : 'none';
+        document.getElementById('selfOnlyFields').style.display = isPt ? 'none' : 'block';
+    }
+
+    const exerciseData = {
+        "등": ["데드리프트", "와이드 풀다운 리어", "암풀다운", "렛풀다운", "시티드 로우", "바벨로우", "어시스트 풀업"],
+        "하체": ["스티프 데드리프트", "힙스러스트", "이너타이", "스쿼트", "레그프레스", "런지", "레그 익스텐션", "레그컬"],
+        "가슴": ["벤치프레스", "플라이", "체스트프레스", "인클라인 체스트 프레스", "딥스", "푸쉬업(인클라인)"],
+        "어깨": ["프론트 레이즈", "페이스풀", "사레레", "숄더프레스", "리버스 플라이"],
+        "삼두": ["익스텐션", "푸쉬다운"]
+    };
+
+    function updateExercises() {
+        const part = document.getElementById('part').value;
+        document.getElementById('exName').innerHTML = exerciseData[part].map(ex => `<option value="${ex}">${ex}</option>`).join('');
+    }
+
+    function addWorkout() {
+        const type = document.querySelector('input[name="workoutType"]:checked').value;
+        const w = document.getElementById('weight').value;
+        const s = document.getElementById('sets').value;
+        const r = document.getElementById('reps').value;
+        if(!w || !s || !r) { alert("수치를 입력해주세요!"); return; }
+
+        const selectedDate = new Date(document.getElementById('workoutDate').value);
+        const days = ['일', '월', '화', '수', '목', '금', '토'];
+        const dateStr = `${selectedDate.getFullYear()}. ${selectedDate.getMonth()+1}. ${selectedDate.getDate()}. (${days[selectedDate.getDay()]})`;
+
+        let data = {
+            id: Date.now(), type, part: document.getElementById('part').value,
+            tool: document.getElementById('tool').value, name: document.getElementById('exName').value,
+            volume: `${w}kg · ${s}set · ${r}회`, date: dateStr,
+            rawDate: document.getElementById('workoutDate').value
+        };
+
+        if(type === "PT 레슨") {
+            data.grip = document.getElementById('handGrip').value;
+            data.speed = document.getElementById('speed').value;
+            
+            // 다중 체크된 포인트 가져오기
+            const checkedPoints = Array.from(document.querySelectorAll('.pt-check:checked')).map(cb => cb.value);
+            data.note = checkedPoints.length > 0 ? checkedPoints.join(', ') : "성공!";
+        } else {
+            data.perf = document.getElementById('selfPerf').value;
+            data.note = document.getElementById('selfNote').value || "1. 오운완!";
+        }
+
+        workouts.push(data);
+        workouts.sort((a, b) => new Date(b.rawDate) - new Date(a.rawDate) || b.id - a.id);
+        
+        localStorage.setItem('hyunKyungData', JSON.stringify(workouts));
+        renderReport();
+        
+        // 입력 초기화 (체크박스 포함)
+        ["weight", "sets", "reps", "ptDirect", "selfNote"].forEach(id => document.getElementById(id).value = "");
+        document.querySelectorAll('.pt-check').forEach(cb => cb.checked = false);
+    }
+
+    function deleteWorkout(id) {
+        if(confirm("기록을 지울까요?")) {
+            workouts = workouts.filter(w => w.id !== id);
+            localStorage.setItem('hyunKyungData', JSON.stringify(workouts));
+            renderReport();
+        }
+    }
+
+    function renderReport() {
+        const area = document.getElementById('report-area'); area.innerHTML = "";
+        const groups = workouts.reduce((acc, obj) => { 
+            const key = obj.date + "_" + obj.part;
+            if (!acc[key]) acc[key] = []; acc[key].push(obj); return acc; 
+        }, {});
+        
+        for (const key in groups) {
+            const part = groups[key][0].part;
+            const displayDate = groups[key][0].date;
+            let html = `<div class="card">
+                <div class="header h-${part}">${part} <span class="date-text">(${displayDate})</span></div>
+                <table class="table mb-0"><tbody>`;
+            
+            groups[key].forEach(w => {
+                const isPt = w.type === "PT 레슨";
+                html += `
+                <tr class="border-0">
+                    <td style="width: 50%; padding-bottom: 0;">
+                        <span class="tool-tag">[${w.tool}]</span><strong>${w.name}</strong> 
+                        ${w.perf ? `<span class="badge bg-light text-dark border perf-tag">${w.perf}</span>` : ""}
+                    </td>
+                    <td class="text-center vol-text" style="width: 35%; padding-bottom: 0;">${w.volume}</td>
+                    <td class="text-end" style="width: 15%; padding-bottom: 0;"><a href="javascript:void(0)" onclick="deleteWorkout(${w.id})" class="del-link">×</a></td>
+                </tr>
+                <tr><td colspan="3" class="pt-0 border-0">
+                    <div class="sub-info">
+                        <div class="mb-1">
+                            <span class="${isPt ? 'pt-badge' : 'self-badge'}">${isPt ? 'PT 수업' : '개인 운동'}</span>
+                            ${isPt ? `<span class="ms-2">🧤 <b>${w.grip}</b> | ⚡ <b>${w.speed}</b></span>` : ""}
+                        </div>
+                        <div class="text-dark">ㄴ ${w.note}</div>
+                    </div>
+                </td></tr>`;
+            });
+            area.innerHTML += html + `</tbody></table></div>`;
+        }
+    }
+    updateExercises();
+    toggleNoteField();
+    updatePointUI();
+</script>
+</body>
+</html>
